@@ -20,6 +20,8 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +46,8 @@ public class HelloWorldClient {
   /** Say hello to server. */
   public void greet(String name) {
     logger.info("Will try to greet " + name + " ...");
-    HelloRequest request = HelloRequest.newBuilder().setName(name).build();
+    Scanner scanner = new Scanner(System.in);
+    HelloRequest request = HelloRequest.newBuilder().setName(scanner.next()).build();
     HelloReply response;
     try {
       response = blockingStub.sayHello(request);
