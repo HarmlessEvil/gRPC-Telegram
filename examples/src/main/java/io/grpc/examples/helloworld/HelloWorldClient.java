@@ -45,9 +45,9 @@ public class HelloWorldClient {
 
   /** Say hello to server. */
   public void greet(String name) {
-    logger.info("Will try to greet " + name + " ...");
+//    logger.info("Will try to greet " + name + " ...");
     Scanner scanner = new Scanner(System.in);
-    HelloRequest request = HelloRequest.newBuilder().setName(scanner.next()).build();
+    HelloRequest request = HelloRequest.newBuilder().setName(scanner.nextLine()).build();
     HelloReply response;
     try {
       response = blockingStub.sayHello(request);
@@ -55,7 +55,8 @@ public class HelloWorldClient {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    logger.info("Greeting: " + response.getMessage());
+    System.out.println(response.getMessage());
+//    logger.info("Greeting: " + response.getMessage());
   }
 
   /**

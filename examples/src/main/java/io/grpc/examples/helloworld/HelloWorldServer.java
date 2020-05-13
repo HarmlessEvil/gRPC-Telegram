@@ -85,8 +85,10 @@ public class HelloWorldServer {
 
     @Override
     public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
+      System.out.println(req.getName());
+
       Scanner scanner = new Scanner(System.in);
-      HelloReply reply = HelloReply.newBuilder().setMessage(scanner.next()).build();
+      HelloReply reply = HelloReply.newBuilder().setMessage(scanner.nextLine()).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }
