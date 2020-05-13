@@ -20,6 +20,9 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -82,7 +85,8 @@ public class HelloWorldServer {
 
     @Override
     public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
-      HelloReply reply = HelloReply.newBuilder().setMessage("Hello " + req.getName()).build();
+      Scanner scanner = new Scanner(System.in);
+      HelloReply reply = HelloReply.newBuilder().setMessage(scanner.next()).build();
       responseObserver.onNext(reply);
       responseObserver.onCompleted();
     }
