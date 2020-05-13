@@ -91,7 +91,9 @@ public class HelloWorldClient {
         .build();
     try {
       HelloWorldClient client = new HelloWorldClient(channel);
-      client.greet(user);
+      while (true) {
+        client.greet(user);
+      }
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
       // resources the channel should be shut down when it will no longer be used. If it may be used
