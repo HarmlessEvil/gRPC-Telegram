@@ -46,17 +46,26 @@ public class HelloWorldClient {
   /** Say hello to server. */
   public void greet(String name) {
 //    logger.info("Will try to greet " + name + " ...");
-    Scanner scanner = new Scanner(System.in);
-    HelloRequest request = HelloRequest.newBuilder().setName(scanner.nextLine()).build();
-    HelloReply response;
+    HelloGreeting greeting = HelloGreeting.newBuilder().setName(name).build();
+    HelloGreeting response;
     try {
-      response = blockingStub.sayHello(request);
+      response = blockingStub.greet(greeting);
     } catch (StatusRuntimeException e) {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    System.out.println(response.getMessage());
+    System.out.println(response.getName() + " has joined the chat.");
 //    logger.info("Greeting: " + response.getMessage());
+  }
+
+  private static final Scanner scanner = new Scanner(System.in);
+  public void sendMessage(String message) {
+    HelloMessage helloMessage = HelloMessage.newBuilder().setText(message).build();
+    try {
+      Empty response = blockingStub.sendMessage(helloMessage);
+    } catch (StatusRuntimeException e) {
+      logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
+    }
   }
 
   /**
@@ -64,7 +73,7 @@ public class HelloWorldClient {
    * greeting. The second argument is the target server.
    */
   public static void main(String[] args) throws Exception {
-    String user = "world";
+    String user = "anonymous";
     // Access a service running on the local machine on port 50051
     String target = "localhost:50051";
     // Allow passing in the user and target strings as command line arguments
@@ -92,8 +101,10 @@ public class HelloWorldClient {
         .build();
     try {
       HelloWorldClient client = new HelloWorldClient(channel);
+      client.greet(user);
+
       while (true) {
-        client.greet(user);
+        client.sendMessage(scanner.nextLine());
       }
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent leaking these

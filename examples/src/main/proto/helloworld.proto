@@ -24,14 +24,29 @@ package helloworld;
 service Greeter {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
+
+  rpc Greet (HelloGreeting) returns (HelloGreeting) {}
+  rpc SendMessage (HelloMessage) returns (Empty) {}
 }
 
 // The request message containing the user's name.
+message HelloGreeting {
+  string name = 1;
+}
+
 message HelloRequest {
   string name = 1;
+}
+
+message HelloMessage {
+  string text = 1;
 }
 
 // The response message containing the greetings
 message HelloReply {
   string message = 1;
+}
+
+message Empty {
+
 }

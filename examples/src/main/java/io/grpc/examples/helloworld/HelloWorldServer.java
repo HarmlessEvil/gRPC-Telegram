@@ -19,10 +19,8 @@ package io.grpc.examples.helloworld;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
+
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -38,7 +36,7 @@ public class HelloWorldServer {
     /* The port on which the server should run */
     int port = 50051;
     server = ServerBuilder.forPort(port)
-        .addService(new GreeterImpl())
+        .addService(new GreeterImpl(name))
         .build()
         .start();
     logger.info("Server started, listening on " + port);
@@ -72,24 +70,51 @@ public class HelloWorldServer {
     }
   }
 
+  private final String name;
+
+  public HelloWorldServer(String name) {
+    this.name = name;
+  }
+
   /**
    * Main launches the server from the command line.
    */
   public static void main(String[] args) throws IOException, InterruptedException {
-    final HelloWorldServer server = new HelloWorldServer();
+    String name = "admin";
+
+    if (args.length > 0) {
+      name = args[0];
+    }
+
+    final HelloWorldServer server = new HelloWorldServer(name);
     server.start();
     server.blockUntilShutdown();
   }
 
   static class GreeterImpl extends GreeterGrpc.GreeterImplBase {
+    private final String name;
+
+    public GreeterImpl(String name) {
+      this.name = name;
+    }
+
+    private String opponentName;
 
     @Override
-    public void sayHello(HelloRequest req, StreamObserver<HelloReply> responseObserver) {
-      System.out.println(req.getName());
+    public void greet(HelloGreeting req, StreamObserver<HelloGreeting> responseObserver) {
+      opponentName = req.getName();
+      System.out.println(opponentName + " has joined the chat.");
 
-      Scanner scanner = new Scanner(System.in);
-      HelloReply reply = HelloReply.newBuilder().setMessage(scanner.nextLine()).build();
-      responseObserver.onNext(reply);
+      HelloGreeting greeting = HelloGreeting.newBuilder().setName(name).build();
+      responseObserver.onNext(greeting);
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void sendMessage(HelloMessage request, StreamObserver<Empty> responseObserver) {
+      System.out.println(opponentName + "> " + request.getText());
+
+      responseObserver.onNext(Empty.newBuilder().build());
       responseObserver.onCompleted();
     }
   }
