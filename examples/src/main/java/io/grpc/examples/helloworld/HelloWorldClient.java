@@ -20,7 +20,9 @@ import io.grpc.Channel;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.StreamObserver;
 
+import java.util.Date;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -33,6 +35,7 @@ public class HelloWorldClient {
   private static final Logger logger = Logger.getLogger(HelloWorldClient.class.getName());
 
   private final GreeterGrpc.GreeterBlockingStub blockingStub;
+  private final GreeterGrpc.GreeterStub asyncStub;
 
   /** Construct client for accessing HelloWorld server using the existing channel. */
   public HelloWorldClient(Channel channel) {
@@ -41,8 +44,10 @@ public class HelloWorldClient {
 
     // Passing Channels to code makes code easier to test and makes it easier to reuse Channels.
     blockingStub = GreeterGrpc.newBlockingStub(channel);
+    asyncStub = GreeterGrpc.newStub(channel);
   }
 
+  private String opponentName;
   /** Say hello to server. */
   public void greet(String name) {
 //    logger.info("Will try to greet " + name + " ...");
@@ -54,7 +59,8 @@ public class HelloWorldClient {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
       return;
     }
-    System.out.println(response.getName() + " has joined the chat.");
+    opponentName = response.getName();
+    System.out.println(opponentName + " has joined the chat.");
 //    logger.info("Greeting: " + response.getMessage());
   }
 
@@ -66,6 +72,42 @@ public class HelloWorldClient {
     } catch (StatusRuntimeException e) {
       logger.log(Level.WARNING, "RPC failed: {0}", e.getStatus());
     }
+  }
+
+  public void receiveMessages() {
+    StreamObserver<HelloMessage> messageStreamObserver = asyncStub.sendMessages(new StreamObserver<HelloMessage>() {
+      @Override
+      public void onNext(HelloMessage value) {
+        System.out.println(
+                '(' + new Date(value.getTimestamp()).toString() + ") " +  opponentName + "> " + value.getText()
+        );
+      }
+
+      @Override
+      public void onError(Throwable t) {
+        logger.log(Level.WARNING, "Some error occurred");
+      }
+
+      @Override
+      public void onCompleted() {
+
+      }
+    });
+
+    try {
+      while (true) {
+        HelloMessage message = HelloMessage
+                .newBuilder()
+                .setText(scanner.nextLine())
+                .setTimestamp((new Date()).getTime())
+                .build();
+        messageStreamObserver.onNext(message);
+      }
+    } catch (RuntimeException e) {
+      messageStreamObserver.onError(e);
+    }
+
+    messageStreamObserver.onCompleted();
   }
 
   /**
@@ -103,9 +145,7 @@ public class HelloWorldClient {
       HelloWorldClient client = new HelloWorldClient(channel);
       client.greet(user);
 
-      while (true) {
-        client.sendMessage(scanner.nextLine());
-      }
+      client.receiveMessages();
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
       // resources the channel should be shut down when it will no longer be used. If it may be used

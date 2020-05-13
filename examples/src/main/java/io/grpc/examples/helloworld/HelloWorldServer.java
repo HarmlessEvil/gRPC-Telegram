@@ -21,7 +21,10 @@ import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 
 import java.io.IOException;
+import java.util.Date;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -116,6 +119,59 @@ public class HelloWorldServer {
 
       responseObserver.onNext(Empty.newBuilder().build());
       responseObserver.onCompleted();
+    }
+
+    private static final Scanner scanner = new Scanner(System.in);
+    @Override
+    public StreamObserver<HelloMessage> sendMessages(final StreamObserver<HelloMessage> responseObserver) {
+      class ReadingThread implements Runnable {
+        private boolean running = true;
+
+        @Override
+        public void run() {
+          while (running) {
+            HelloMessage message = HelloMessage
+                    .newBuilder()
+                    .setText(scanner.nextLine())
+                    .setTimestamp((new Date()).getTime())
+                    .build();
+            responseObserver.onNext(message);
+          }
+        }
+
+        public void stop() {
+          running = false;
+        }
+      }
+
+      ReadingThread reading = new ReadingThread();
+      Thread thread = new Thread(reading);
+      thread.start();
+
+      return new StreamObserver<HelloMessage>() {
+        @Override
+        public void onNext(HelloMessage value) {
+          System.out.println(
+                  '(' + new Date(value.getTimestamp()).toString() + ") " +  opponentName + "> " + value.getText()
+          );
+        }
+
+        @Override
+        public void onError(Throwable t) {
+          logger.log(Level.WARNING, "Some error occurred");
+          reading.stop();
+          try {
+            thread.join();
+          } catch (InterruptedException e) {
+            logger.log(Level.WARNING, "Some error occurred while reading input");
+          }
+        }
+
+        @Override
+        public void onCompleted() {
+          responseObserver.onCompleted();
+        }
+      };
     }
   }
 }

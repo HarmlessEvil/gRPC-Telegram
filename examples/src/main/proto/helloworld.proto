@@ -27,6 +27,7 @@ service Greeter {
 
   rpc Greet (HelloGreeting) returns (HelloGreeting) {}
   rpc SendMessage (HelloMessage) returns (Empty) {}
+  rpc SendMessages (stream HelloMessage) returns (stream HelloMessage) {}
 }
 
 // The request message containing the user's name.
@@ -40,6 +41,7 @@ message HelloRequest {
 
 message HelloMessage {
   string text = 1;
+  int64 timestamp = 2;
 }
 
 // The response message containing the greetings
